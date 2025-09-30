@@ -1,0 +1,70 @@
+[
+  {
+    "id": 1,
+    "title": "Document 1",
+    "tags": ["python", "ml"],
+    "published": true,
+    "metadata": {"author": "Mustafa", "length": "1200"},
+    "views": 300
+  },
+  {
+    "id": 2,
+    "title": "Document 2",
+    "tags": ["data", "analysis"],
+    "published": false
+  },
+  {
+    "id": 3,
+    "title": "Document 3",
+    "tags": [],
+    "published": true,
+    "metadata": {"author": "Alice"}
+  },
+  {
+    "id": 4,
+    "title": "Document 4",
+    "tags": ["example", "demo"],
+    "published": true,
+    "metadata": {"author": "Bob", "length": "850"},
+    "views": 150
+  },
+  {
+    "id": 5,
+    "title": "Document 5",
+    "tags": ["python"],
+    "published": false
+  },
+  {
+    "id": 6,
+    "title": "Document 6",
+    "tags": ["ml", "ai"],
+    "published": true,
+    "metadata": {"author": "Carol"}
+  },
+  {
+    "id": 7,
+    "title": "Document 7",
+    "tags": ["data"],
+    "published": true
+  },
+  {
+    "id": 8,
+    "title": "Document 8",
+    "tags": ["analysis"],
+    "published": false,
+    "metadata": {"author": "David", "length": "500"}
+  },
+  {
+    "id": 9,
+    "title": "Document 9",
+    "tags": ["tutorial"],
+    "published": true
+  },
+  {
+    "id": 10,
+    "title": "Document 10",
+    "tags": ["example"],
+    "published": false,
+    "metadata": {"author": "Eve"}
+  }
+]
