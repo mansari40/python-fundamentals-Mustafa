@@ -78,6 +78,12 @@ flags = [True, False, True, False, True, False, True, False]
 print("\nRows selected by boolean flags:")
 print(df[flags])
 
+# Filter by range (Ages between 30 and 50)
+temp_df = df.copy()
+temp_df["Age"] = pd.to_numeric(temp_df["Age"], errors="coerce")
+print("\nAges between 30 and 50:")
+print(temp_df[(temp_df["Age"] > 30) & (temp_df["Age"] <= 50)])
+
 # Data cleaning with duplicated, nunique, drop_duplicates (Task 7)
 
 # Check for duplicates
