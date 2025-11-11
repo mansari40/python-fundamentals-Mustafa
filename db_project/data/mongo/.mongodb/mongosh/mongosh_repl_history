@@ -1,7 +1,0 @@
-exit
-use pythonde
-db.system.version.findOne()
-use admin
-show dbs
-docker ps
-show dbs
