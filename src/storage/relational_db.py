@@ -16,8 +16,3 @@ class Base(DeclarativeBase):  # type: ignore[misc]
 
 
 Session = sessionmaker(bind=engine)
-
-if __name__ == "__main__":
-    from models import relational  # noqa: F401
-
-    Base.metadata.create_all(bind=engine)
