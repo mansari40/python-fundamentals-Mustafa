@@ -6,7 +6,7 @@ from models.relational import ScientificArticle, Author
 from storage.relational_db import Session
 
 
-def load_articles_csv(path: str) -> pd.DataFrame:
+def load_data_from_csv(path: str) -> pd.DataFrame:
     file_path = Path(path)
     df = pd.read_csv(file_path, delimiter=";", dtype="string")
     return df
