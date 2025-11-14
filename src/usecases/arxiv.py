@@ -54,7 +54,8 @@ def parse_xml_data(xml_data: str) -> pd.DataFrame:
 
 def fetch_html_content(url: str) -> str:
     try:
-        r = requests.get(url, timeout=10)
+        html_url = url.replace("/pdf/", "/abs/").replace(".pdf", "")
+        r = requests.get(html_url, timeout=10)
         if r.status_code == 200:
             return str(r.text)
         else:
