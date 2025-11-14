@@ -1,51 +1,36 @@
 from pathlib import Path
-from sqlalchemy.orm import joinedload
-from storage.relational_db import Session
-from models.relational import ScientificArticle as SQLArticle
+import pandas as pd
+import pymupdf4llm
 from models.mongo import ScientificArticle as MongoArticle, Author as MongoAuthor
 import storage.mongo  # noqa: F401
-import fitz
-import markdownify
 
 
-def export_articles_to_mongo(papers_dir: Path) -> None:
-    with Session() as session:
-        articles = (
-            session.query(SQLArticle).options(joinedload(SQLArticle.author)).all()
+def store_article(row: pd.Series) -> pd.Series:
+    try:
+        m_author = MongoAuthor(
+            db_id=row["author_db_id"],
+            full_name=row["author_full_name"],
+            title=row["author_title"],
         )
-
-        for article in articles:
-            if not article.author:
-                continue
-
-            pdf_path = papers_dir / Path(article.file_path).name
-            try:
-                with fitz.open(pdf_path) as pdf:
-                    text = "\n".join(page.get_text("text") for page in pdf)
-            except Exception:
-                continue
-
-            text_md = markdownify.markdownify(text)
-
-            author_doc = MongoAuthor(
-                db_id=article.author.id,
-                full_name=article.author.full_name or "",
-                title=article.author.title or "",
-            )
-
-            mongo_doc = MongoArticle(
-                db_id=article.id,
-                title=article.title or "",
-                summary=article.summary or "",
-                file_path=str(pdf_path),
-                arxiv_id=article.arxiv_id or "",
-                created_at=article.created_at,
-                author=author_doc,
-                text=text_md or "",
-            )
-
-            mongo_doc.save(validate=False)
+        pdf_path = Path(row["file_path"])
+        text_md = pymupdf4llm.to_markdown(pdf_path)
+        m_article = MongoArticle(
+            db_id=row["db_id"],
+            title=row["title"],
+            summary=row["summary"],
+            file_path=str(pdf_path),
+            arxiv_id=row["arxiv_id"],
+            author=m_author,
+            text=text_md,
+        )
+        m_article.save()
+        print("Stored in Mongo:", row["arxiv_id"])
+        return pd.Series([str(m_article.id)], index=["mongo_db_id"])
+    except Exception as e:
+        print("Mongo insert failed:", e)
+        return pd.Series([""], index=["mongo_db_id"])
 
 
-if __name__ == "__main__":
-    export_articles_to_mongo(Path("data/Papers"))
+def create_in_mongo(df: pd.DataFrame) -> pd.DataFrame:
+    ids = df.apply(store_article, axis=1)
+    return pd.concat([df, ids], axis=1)
