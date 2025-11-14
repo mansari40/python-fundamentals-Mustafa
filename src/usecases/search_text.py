@@ -14,6 +14,6 @@ def search_icontains(keyword: str) -> None:
         print(f"{a.arxiv_id}: {a.title}")
 
 
-if __name__ == "__main__":
-    search_icontains("Africa")
-    search_text("Africa")
+def search_text_index(keyword: str) -> list[ScientificArticle]:
+    results = ScientificArticle.objects.search_text(keyword)
+    return list(results)
