@@ -65,32 +65,12 @@ def get_user_by_username(username: str) -> MongoUser | None:
 
 
 def update_user_city(username: str, new_city: str) -> None:
-    result = users_col.update_one(
+    users_col.update_one(
         {"username": username},
         {"$set": {"profile.city": new_city}},
     )
-    if result.modified_count:
-        print(f"Updated '{username}' city to '{new_city}'.")
-    else:
-        print(f"No update for '{username}'.")
 
 
 if __name__ == "__main__":
-    users_col.delete_many({})  
-
-    create_user("alice", "alice@example.com", 27, "Berlin")
-    create_user("ahmad", "ahmad@example.com", 34, "Bremen")
-
-    print("\nAll users:")
-    for user in list_users():
-        print(user)
-
-    print("\nFind user (alice):")
-    print(get_user_by_username("alice"))
-
-    print("\nUpdate user city:")
-    update_user_city("ahmad", "Hamburg")
-
-    print("\nAll users after update:")
-    for user in list_users():
-        print(user)
+    info = client.pythonde.command({"listIndexes": "users"})
+    print(info)
