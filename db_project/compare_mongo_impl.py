@@ -16,8 +16,6 @@ connect("pythonde", host="mongodb://root:secret@localhost:27017/")
 User.objects.delete()
 
 
-print("test 1: PyMongo implementation")
-
 create_user_pymongo("john", "john@example.com", 29, "Berlin")
 create_user_pymongo("sara", "sara@example.com", 31, "Munich")
 update_city_pymongo("john", "Hamburg")
@@ -25,8 +23,6 @@ update_city_pymongo("john", "Hamburg")
 print("\nPyMongo users:")
 pymongo_users = [u.model_dump() for u in list_users_pymongo()]
 pprint(pymongo_users)
-
-print("test 2: MongoEngine implementation")
 
 User.objects.delete()
 
