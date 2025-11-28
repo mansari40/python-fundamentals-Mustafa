@@ -1,73 +1,71 @@
-# from pathlib import Path
-import re
+from pathlib import Path
+import requests
 import pandas as pd
-
-# import pymupdf4llm
+from urllib.parse import urlparse
+import pymupdf4llm
 from models.mongo import ScientificArticle as MongoArticle, Author as MongoAuthor
 import storage.mongo  # noqa: F401
+from mongoengine import DoesNotExist
 
 
-# Commented out bcz i now use HTML content instead of PDF text
-# def store_article(row: pd.Series) -> pd.Series:
-#     try:
-#         m_author = MongoAuthor(
-#             db_id=row["author_db_id"],
-#             full_name=row["author_full_name"],
-#             title=row["author_title"],
-#         )
-#         pdf_path = Path(row["file_path"])
-#         text_md = pymupdf4llm.to_markdown(pdf_path)
-#         m_article = MongoArticle(
-#             db_id=row["db_id"],
-#             title=row["title"],
-#             summary=row["summary"],
-#             file_path=str(pdf_path),
-#             arxiv_id=row["arxiv_id"],
-#             author=m_author,
-#             text=text_md,
-#         )
-#         m_article.save()
-#         print("Stored in Mongo:", row["arxiv_id"])
-#         return pd.Series([str(m_article.id)], index=["mongo_db_id"])
-#     except Exception as e:
-#         print("Mongo insert failed:", e)
-#         return pd.Series([""], index=["mongo_db_id"])
+def download_file(article: pd.Series) -> pd.Series:
+    parsed = urlparse(article.file_path)
+    if parsed.scheme:
+        filename = Path(parsed.path).stem
+        new_path = f"data/articles/{filename}.pdf"
+        if not Path(new_path).exists():
+            response = requests.get(article.file_path)
+            with open(new_path, "wb") as f:
+                f.write(response.content)
+    else:
+        new_path = article.file_path
+    return pd.Series([new_path], index=["local_file_path"])
 
 
-def extract_text_from_html(html: str) -> str:
-    if not isinstance(html, str):
-        return ""
-    clean = re.sub(r"<[^>]+>", "", html)
-    return clean.replace("\n", " ").strip()
+def convert_article_to_markdown(article: pd.Series) -> pd.Series:
+    text = pymupdf4llm.to_markdown(article.local_file_path)
+    with open(f"{article.local_file_path}.md", "w") as f:
+        f.write(text)
+    return pd.Series([text], index=["md_text"], dtype="string")
 
 
-def store_article(row: pd.Series) -> pd.Series:
+def store_article(article: pd.Series) -> pd.Series:
     try:
         m_author = MongoAuthor(
-            db_id=row["author_db_id"],
-            full_name=row["author_full_name"],
-            title=row["author_title"],
+            db_id=article.author_db_id,
+            full_name=article.author_full_name,
+            title=article.author_title,
         )
-
-        html_text = extract_text_from_html(row["html_content"])
-
-        m_article = MongoArticle(
-            db_id=row["db_id"],
-            title=row["title"],
-            summary=row["summary"],
-            file_path=row["file_path"],
-            arxiv_id=row["arxiv_id"],
+        data = dict(
+            db_id=article.db_id,
+            title=article.title,
+            summary=article.summary,
+            file_path=article.file_path,
+            arxiv_id=article.arxiv_id,
             author=m_author,
-            text=html_text,
+            text=article.md_text,
         )
-        m_article.save()
-        print("Stored in Mongo (HTML):", row["arxiv_id"])
-        return pd.Series([str(m_article.id)], index=["mongo_db_id"])
-    except Exception as e:
-        print("Mongo insert failed:", e)
+        try:
+            existing = MongoArticle.objects.get(arxiv_id=article.arxiv_id)
+            existing.update(**data)
+        except DoesNotExist:
+            MongoArticle(**data).save()
+        mongo_id = str(MongoArticle.objects.get(arxiv_id=article.arxiv_id).id)
+        return pd.Series([mongo_id], index=["mongo_db_id"])
+    except Exception:
         return pd.Series([""], index=["mongo_db_id"])
 
 
 def create_in_mongo(df: pd.DataFrame) -> pd.DataFrame:
     ids = df.apply(store_article, axis=1)
     return pd.concat([df, ids], axis=1)
+
+
+def download_files(df: pd.DataFrame) -> pd.DataFrame:
+    filenames = df.apply(download_file, axis=1)
+    return pd.concat([df, filenames], axis=1)
+
+
+def convert_to_markdown(df: pd.DataFrame) -> pd.DataFrame:
+    texts = df.apply(convert_article_to_markdown, axis=1)
+    return pd.concat([df, texts], axis=1)
