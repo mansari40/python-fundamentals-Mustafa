@@ -1,9 +1,10 @@
-__pycache__/ 
+__pycache__/
 venv/
 .mypy_cache/
 .ruff_cache/
 
 data/mariadb/
 data/mongo/
+db_project/data/
 
 .env
