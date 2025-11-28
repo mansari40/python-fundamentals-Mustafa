@@ -4,3 +4,4 @@ venv/
 .ruff_cache/
 
 db_project/data/
+.env
