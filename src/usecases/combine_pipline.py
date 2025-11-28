@@ -12,7 +12,6 @@ if __name__ == "__main__":
 
     df = df.pipe(convert_to_markdown).pipe(embed_documents)
 
-    print("pipeline done")
     print("shape:", df.shape)
 
     with pd.option_context("display.max_colwidth", 200):
