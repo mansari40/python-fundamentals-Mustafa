@@ -1,8 +1,9 @@
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 import os
-
 
 load_dotenv()
 
@@ -16,8 +17,13 @@ result = client.models.embed_content(
         "LLMs can measure similarity and generate new content.",
         "LLMs can do complex tasks like understanding context.",
     ],
-    config=types.EmbedContentConfig(output_dimensionality=768),
+    config=types.EmbedContentConfig(
+        output_dimensionality=768, task_type="SEMANTIC_SIMILARITY"
+    ),
 )
 
+embeddings = result.embeddings or []
+embeddings_matrix = np.array([np.array(e.values) for e in embeddings])
+similarity_matrix = cosine_similarity(embeddings_matrix)
 
-print(result.embeddings)
+print(similarity_matrix)
