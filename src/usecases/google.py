@@ -14,27 +14,30 @@ def embed_article(
 ) -> pd.Series:
     text = article.md_text
     start = 0
-    segments: list[str] = []
+    chunks: list[str] = []
 
     while start < len(text):
         end = start + chunk_size
-        segment = text[start:end]
+        chunk = text[start:end]
 
         if end < len(text):
-            last_period = segment.rfind(".")
+            last_period = chunk.rfind(".")
             if last_period > chunk_size // 2:
                 end = start + last_period + 1
-                segment = text[start:end]
+                chunk = text[start:end]
 
-        segments.append(segment.strip())
+        chunks.append(chunk.strip())
         start = end - overlap
 
-    print(segments)
+    avg = sum(len(c) for c in chunks) / len(chunks)
+
+    print(article.local_file_path, len(chunks), avg)
 
     embeddings: list[str] = []
-    return pd.Series({"chunk_text": segments, "embeddings": embeddings})
+
+    return pd.Series({"chunk_text": chunks, "embeddings": embeddings})
 
 
 def embed_documents(df: pd.DataFrame) -> pd.DataFrame:
-    df[["chunk_text", "embeddings"]] = df.progress_apply(embed_article, axis=1)
-    return df
+    df = df.progress_apply(embed_article, axis=1)
+    return df.explode("chunk_text")
