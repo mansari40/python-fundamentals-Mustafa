@@ -1,7 +1,4 @@
-from pathlib import Path
-import requests
 import pandas as pd
-from urllib.parse import urlparse
 import pymupdf4llm
 from models.mongo import ScientificArticle as MongoArticle, Author as MongoAuthor
 import storage.mongo  # noqa: F401
@@ -9,22 +6,14 @@ from mongoengine import DoesNotExist
 
 
 def download_file(article: pd.Series) -> pd.Series:
-    parsed = urlparse(article.file_path)
-    if parsed.scheme:
-        filename = Path(parsed.path).stem
-        new_path = f"data/articles/{filename}.pdf"
-        if not Path(new_path).exists():
-            response = requests.get(article.file_path)
-            with open(new_path, "wb") as f:
-                f.write(response.content)
-    else:
-        new_path = article.file_path
-    return pd.Series([new_path], index=["local_file_path"])
+    return pd.Series([article.file_path], index=["local_file_path"])
 
 
 def convert_article_to_markdown(article: pd.Series) -> pd.Series:
     text = pymupdf4llm.to_markdown(article.local_file_path)
-    with open(f"{article.local_file_path}.md", "w") as f:
+    with open(
+        f"{article.local_file_path}.md", "w", encoding="utf-8", errors="ignore"
+    ) as f:
         f.write(text)
     return pd.Series([text], index=["md_text"], dtype="string")
 

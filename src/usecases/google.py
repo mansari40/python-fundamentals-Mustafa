@@ -1,29 +1,40 @@
 from google import genai
-from google.genai import types
+from google.genai import types  # noqa: F401
 from dotenv import load_dotenv
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 import os
+import pandas as pd  # noqa: F401
 
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-result = client.models.embed_content(
-    model="models/gemini-embedding-001",
-    contents=[
-        "Machine learning is a subset of AI that trains computers to learn from data.",
-        "Deep learning is a subset of machine learning that uses neural networks.",
-        "LLMs can measure similarity and generate new content.",
-        "LLMs can do complex tasks like understanding context.",
-    ],
-    config=types.EmbedContentConfig(
-        output_dimensionality=768, task_type="SEMANTIC_SIMILARITY"
-    ),
-)
 
-embeddings = result.embeddings or []
-embeddings_matrix = np.array([np.array(e.values) for e in embeddings])
-similarity_matrix = cosine_similarity(embeddings_matrix)
+def embed_article(
+    article: pd.Series, chunk_size: int = 1200, overlap: int = 250
+) -> pd.Series:
+    text = article.md_text
+    start = 0
+    segments: list[str] = []
 
-print(similarity_matrix)
+    while start < len(text):
+        end = start + chunk_size
+        segment = text[start:end]
+
+        if end < len(text):
+            last_period = segment.rfind(".")
+            if last_period > chunk_size // 2:
+                end = start + last_period + 1
+                segment = text[start:end]
+
+        segments.append(segment.strip())
+        start = end - overlap
+
+    print(segments)
+
+    embeddings: list[str] = []
+    return pd.Series({"chunk_text": segments, "embeddings": embeddings})
+
+
+def embed_documents(df: pd.DataFrame) -> pd.DataFrame:
+    df[["chunk_text", "embeddings"]] = df.progress_apply(embed_article, axis=1)
+    return df

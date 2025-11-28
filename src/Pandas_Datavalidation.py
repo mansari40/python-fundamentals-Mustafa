@@ -159,7 +159,7 @@ def drop_high_missing(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     missing_perc = df.isnull().mean()
     cols_to_drop = missing_perc[missing_perc > threshold].index
     df = df.drop(columns=cols_to_drop)
-    print(f"\nIn pipeline: Dropped columns with >{threshold*100}% missing")
+    print(f"\nIn pipeline: Dropped columns with >{threshold * 100}% missing")
     print(df.columns)
     return df
 

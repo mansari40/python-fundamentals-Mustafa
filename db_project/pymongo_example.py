@@ -51,7 +51,7 @@ def list_users() -> list[MongoUser]:
     users = users_col.find()
     cleaned = []
     for user in users:
-        user["_id"] = str(user["_id"])  
+        user["_id"] = str(user["_id"])
         cleaned.append(user)
     return MongoUserList.validate_python(cleaned)
 

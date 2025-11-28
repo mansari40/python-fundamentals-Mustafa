@@ -38,8 +38,9 @@ class User(Document):
 
 
 def list_users() -> list[MongoUser]:
-    users = User.objects.all().as_pymongo() 
+    users = User.objects.all().as_pymongo()
     return MongoUserList.validate_python(list(users))
+
 
 def create_user(username: str, email: str, age: int, city: str) -> None:
     profile = Profile(age=age, city=city, hobbies=["music", "sports"])

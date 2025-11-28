@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     # Built-in functions
     for index, fruit in enumerate(fruits):
-        print(f"{index+1}: {fruit}")
+        print(f"{index + 1}: {fruit}")
 
     for i in range(3):
         print("Range number:", i)

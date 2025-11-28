@@ -1,13 +1,13 @@
 from pymongo_example import (
     create_user as create_user_pymongo,
     list_users as list_users_pymongo,
-    update_user_city as update_city_pymongo
+    update_user_city as update_city_pymongo,
 )
 from mongoengine_example import (
     create_user as create_user_me,
     list_users as list_users_me,
     update_user_city as update_city_me,
-    User  
+    User,
 )
 from mongoengine import connect
 from pprint import pprint
@@ -36,7 +36,3 @@ except Exception as e:
 print("\nMongoEngine users:")
 mongoengine_users = [u.model_dump() for u in list_users_me()]
 pprint(mongoengine_users)
-
-
-
-
