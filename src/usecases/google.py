@@ -3,6 +3,8 @@ from google.genai import types  # noqa: F401
 from dotenv import load_dotenv
 import os
 import pandas as pd  # noqa: F401
+import numpy as np
+
 
 load_dotenv()
 
@@ -29,15 +31,21 @@ def embed_article(
         chunks.append(chunk.strip())
         start = end - overlap
 
-    avg = sum(len(c) for c in chunks) / len(chunks)
+    result = client.models.embed_content(
+        model="gemini-embedding-001",
+        contents=chunks[:2],
+        config=types.EmbedContentConfig(
+            output_dimensionality=768,
+            task_type="SEMANTIC_SIMILARITY",
+        ),
+    )
 
-    print(article.local_file_path, len(chunks), avg)
-
-    embeddings: list[str] = []
-
-    return pd.Series({"chunk_text": chunks, "embeddings": embeddings})
+    embeddings_array = np.array(
+        [np.array(embedding) for embedding in result.embeddings or []]
+    )
+    return pd.Series([embeddings_array], index=["embeddings"])
 
 
 def embed_documents(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.progress_apply(embed_article, axis=1)
-    return df.explode("chunk_text")
+    df["embeddings"] = df.progress_apply(embed_article, axis=1)
+    return df

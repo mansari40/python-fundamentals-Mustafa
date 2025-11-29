@@ -7,12 +7,14 @@ from tqdm.auto import tqdm
 tqdm.pandas(desc="Loading local papers")
 
 if __name__ == "__main__":
-    files = list(Path("data/Papers").glob("*.pdf"))
-    df = pd.DataFrame({"local_file_path": [str(f) for f in files]})
+    with open("data/arxiv_articles_cut.xml", "r", encoding="utf-8") as f:
+        files = list(Path("data/Papers").glob("*.pdf"))
+        df = pd.DataFrame({"local_file_path": [str(f) for f in files]})
 
-    df = df.pipe(convert_to_markdown).pipe(embed_documents)
+        df = df.pipe(convert_to_markdown).pipe(embed_documents)
 
-    print("shape:", df.shape)
+        print("pipeline done")
+        print("shape:", df.shape)
 
-    with pd.option_context("display.max_colwidth", 200):
-        print(df.head())
+        with pd.option_context("display.max_colwidth", 200):
+            print(df.head())
