@@ -42,3 +42,8 @@ def insert_embeddings(article: pd.Series) -> pd.Series:
 def save_to_qdrant(df: pd.DataFrame) -> pd.DataFrame:
     df.apply(insert_embeddings, axis=1)
     return df
+
+
+def check_chunks_in_qdrant(df: pd.DataFrame) -> pd.DataFrame:
+    exists = df.apply(chunk_exists, axis=1)
+    return pd.concat([df, exists], axis=1)
