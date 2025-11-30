@@ -1,14 +1,28 @@
 import pandas as pd
-from models import ScientificArticleChunk
+from models.chunk import ScientificArticleChunk
 from storage.vector import COLLECTION_NAME, client
 from qdrant_client.models import PointStruct
+import uuid
+
+
+def make_point_id(article_chunk: pd.Series) -> uuid.UUID:
+    return uuid.uuid5(
+        uuid.NAMESPACE_URL,
+        f"{article_chunk.arxiv_id}_chunk_{article_chunk.chunk_index}",
+    )
+
+
+def chunk_exists(article_chunk: pd.Series) -> pd.Series:
+    point_id = make_point_id(article_chunk)
+    records = client.retrieve(COLLECTION_NAME, ids=[point_id])
+    return pd.Series([len(records) > 0], index=["exists_in_qdrant"], dtype=bool)
 
 
 def insert_embeddings(article: pd.Series) -> pd.Series:
     i = 0
     for text, emb in zip(article.chunk_texts, article.embeddings):
         point = PointStruct(
-            id=f"{article.arxiv_id}_chunk_{i}",
+            id=uuid.uuid5(uuid.NAMESPACE_URL, f"{article.arxiv_id}_chunk_{i}"),
             vector=emb,
             payload=ScientificArticleChunk(
                 title=article.title,
@@ -19,7 +33,6 @@ def insert_embeddings(article: pd.Series) -> pd.Series:
                 chunk_index=i,
             ).model_dump(),
         )
-
         client.upsert(collection_name=COLLECTION_NAME, points=[point])
         i += 1
 
