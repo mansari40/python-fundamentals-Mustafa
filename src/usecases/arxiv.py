@@ -19,37 +19,53 @@ def fetch_arxiv_articles(query: str, max_results: int = 10) -> pd.DataFrame:
 
 
 def load_from_xml(xml_data: str) -> pd.DataFrame:
-    file_like = io.StringIO(xml_data)
-    df = pd.read_xml(
-        file_like,
-        xpath="/atom:feed/atom:entry",
-        namespaces={"atom": "http://www.w3.org/2005/Atom"},
-    )[["id", "title", "summary"]]
+    try:
+        file_like = io.StringIO(xml_data)
+        df = pd.read_xml(
+            file_like,
+            xpath="/atom:feed/atom:entry",
+            namespaces={"atom": "http://www.w3.org/2005/Atom"},
+        )[["id", "title", "summary"]]
 
-    df["author_title"] = "PhD"
+        file_like = io.StringIO(xml_data)
+        links = pd.read_xml(
+            file_like,
+            xpath="/atom:feed/atom:entry/atom:link[@title='pdf']",
+            namespaces={"atom": "http://www.w3.org/2005/Atom"},
+        )["href"]
 
-    file_like = io.StringIO(xml_data)
-    links = pd.read_xml(
-        file_like,
-        xpath="/atom:feed/atom:entry/atom:link[@title='pdf']",
-        namespaces={"atom": "http://www.w3.org/2005/Atom"},
-    )["href"]
+        file_like = io.StringIO(xml_data)
+        authors = pd.read_xml(
+            file_like,
+            xpath="/atom:feed/atom:entry/atom:author[1]",
+            namespaces={"atom": "http://www.w3.org/2005/Atom"},
+        )["name"]
 
-    file_like = io.StringIO(xml_data)
-    authors = pd.read_xml(
-        file_like,
-        xpath="/atom:feed/atom:entry/atom:author[1]",
-        namespaces={"atom": "http://www.w3.org/2005/Atom"},
-    )["name"]
+        df["author_title"] = "PhD"
 
-    return pd.concat(
-        [
-            df.rename(columns={"id": "arxiv_id"}),
-            links.rename("file_path"),
-            authors.rename("author_full_name"),
-        ],
-        axis=1,
-    )
+        out = pd.concat(
+            [
+                df.rename(columns={"id": "arxiv_id"}),
+                links.rename("file_path"),
+                authors.rename("author_full_name"),
+            ],
+            axis=1,
+        )
+        out["arxiv_id"] = out["arxiv_id"].astype(str)
+        return out
+    except Exception:
+        file_like = io.StringIO(xml_data)
+        df = pd.read_xml(file_like, xpath="/articles/article")[
+            ["arxiv_id", "title", "summary", "file_path"]
+        ]
+        df["arxiv_id"] = df["arxiv_id"].astype(str)
+
+        file_like = io.StringIO(xml_data)
+        authors = pd.read_xml(file_like, xpath="/articles/article/author")[
+            ["full_name", "title"]
+        ].rename(columns={"full_name": "author_full_name", "title": "author_title"})
+
+        return pd.concat([df, authors], axis=1)
 
 
 def fetch_html_content(url: str) -> str:
@@ -58,8 +74,7 @@ def fetch_html_content(url: str) -> str:
         r = requests.get(html_url, timeout=10)
         if r.status_code == 200:
             return str(r.text)
-        else:
-            return ""
+        return ""
     except Exception:
         return ""
 
