@@ -31,21 +31,23 @@ def embed_article(
         chunks.append(chunk.strip())
         start = end - overlap
 
+    contents = chunks[:2]
     result = client.models.embed_content(
         model="gemini-embedding-001",
-        contents=chunks[:2],
+        contents=contents,
         config=types.EmbedContentConfig(
             output_dimensionality=768,
             task_type="SEMANTIC_SIMILARITY",
         ),
     )
 
-    embeddings_array = np.array(
-        [np.array(embedding) for embedding in result.embeddings or []]
+    embeddings = np.array(
+        [np.array(embedding.values) for embedding in result.embeddings or []]
     )
-    return pd.Series([embeddings_array], index=["embeddings"])
+    return pd.Series([contents, embeddings], index=["chunk_texts", "embeddings"])
 
 
 def embed_documents(df: pd.DataFrame) -> pd.DataFrame:
-    df["embeddings"] = df.progress_apply(embed_article, axis=1)
+    result = df.progress_apply(embed_article, axis=1)
+    df = pd.concat([df, result], axis=1)
     return df

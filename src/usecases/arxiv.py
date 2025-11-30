@@ -13,12 +13,12 @@ def fetch_arxiv_articles(query: str, max_results: int = 10) -> pd.DataFrame:
     }
     response = requests.get(ARXIV_URL, params=dict(params), timeout=15)  # type: ignore[arg-type]
     xml_data = response.text
-    df = parse_xml_data(xml_data)
+    df = load_from_xml(xml_data)
     df = add_html_content(df)
     return df
 
 
-def parse_xml_data(xml_data: str) -> pd.DataFrame:
+def load_from_xml(xml_data: str) -> pd.DataFrame:
     file_like = io.StringIO(xml_data)
     df = pd.read_xml(
         file_like,

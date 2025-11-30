@@ -1,20 +1,22 @@
 from usecases.google import embed_documents
 from usecases.export_articles import convert_to_markdown
+from usecases.arxiv import load_from_xml
 from pathlib import Path
-import pandas as pd
 from tqdm.auto import tqdm
 
-tqdm.pandas(desc="Loading local papers")
+tqdm.pandas(desc="Loading articles")
+
 
 if __name__ == "__main__":
     with open("data/arxiv_articles_cut.xml", "r", encoding="utf-8") as f:
-        files = list(Path("data/Papers").glob("*.pdf"))
-        df = pd.DataFrame({"local_file_path": [str(f) for f in files]})
+        xml_data = f.read()
+        df = load_from_xml(xml_data)
 
-        df = df.pipe(convert_to_markdown).pipe(embed_documents)
+    df["local_file_path"] = df["file_path"].apply(
+        lambda p: str(Path("data") / "Papers" / Path(p).name)
+    )
+    df = df.pipe(convert_to_markdown)
+    df = df.pipe(embed_documents)
 
-        print("pipeline done")
-        print("shape:", df.shape)
-
-        with pd.option_context("display.max_colwidth", 200):
-            print(df.head())
+    print("pipeline done")
+    print("shape:", df.shape)
